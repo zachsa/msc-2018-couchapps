@@ -26,8 +26,16 @@
  * @param {Object} doc 
  */
 function(doc) {
+    var allowedCareers = ["UGRD", "First Year", "Second Year", "Third Year"];
+    var allowedResidence = ["SA Citizen", "Permanent Resident", "C", "P"];
     var type = doc.type_ || null;
+    var career = doc.Career;
+    var residency = doc["Citizenship Residency"];
+
+    /* Filters */
     if (!type === 'benchmark') return;
+    if (allowedCareers.indexOf(career) < 0) return;
+    if (allowedResidence.indexOf(residency) < 0) return;
 
     /* Load Decimal library */
     var Decimal = require("views/lib/decimal");
@@ -55,7 +63,12 @@ function(doc) {
     var id = doc.anonIDnew;
 
     /* Value (each index corresponds to a benchmark) */
-    var benchmarks = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+    var benchmarks = [
+        null, null, null, null, null, null,
+        null, null, null, null, null, null,
+        null, null, null, null, null, null,
+        null
+    ];
 
     /* Normalize symbols to numbers */
     var fuDictionary = {
