@@ -16,7 +16,9 @@
  *         NBT Mth %
  *    ]
  * 
- * This Map function does not require reduce output
+ * 3) Entities
+ *    => [doc.uct_id, 0, year] : [S1 Event, S2 Event]
+ *    // S1 and S2 are effectively binary fields, either 1 or 0
  * 
  * @param {Object} doc 
  */
@@ -30,11 +32,16 @@ function(doc) {
     var type = doc.type_;
     switch (type) {
         case 'grade':
-
-            /* Key */
+            /* Key and other vars */
+            var RegCareer = doc.RegCareer;
             id = doc.anonIDnew;
             course = doc.Course;
             year = doc.RegAcadYear;
+
+            /* Filters */
+            if (course !== 'CSC1015F') return;
+            if (year !== 2016) return;
+            if (RegCareer !== "UGRD") return;
 
             /* Value */
             var percent = doc.Percent || '';
@@ -89,11 +96,16 @@ function(doc) {
             break;
 
         case 'benchmark':
-
-            /* Key */
+            /* Key and other vars */
+            var allowedCareers = ["UGRD", "First Year", "Second Year", "Third Year"];
+            var allowedResidence = ["SA Citizen", "Permanent Resident", "C", "P"];
             id = doc.anonIDnew;
             course = 0;
             year = 0;
+
+            /* Filters */
+            if (allowedCareers.indexOf(career) < 0) return;
+            if (allowedResidence.indexOf(residency) < 0) return;
 
             /* Value (each index corresponds to a benchmark) */
             var benchmarks = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -154,6 +166,34 @@ function(doc) {
 
             /* Output */
             emit([id, course, year], benchmarks);
+            break;
+
+        case 'event':
+            /* Key and other vars */
+            var date = new Date(doc.event_date);
+            var epoch = date.getTime();
+            var event_id = doc.event_id;
+            id = doc.uct_id;
+            course = 0;
+            year = date.getFullYear();
+
+            /* Filter */
+            if (doc.event_id !== 281) return;
+
+            /* Value */
+            var event = [0, 0];
+
+            /* Midpoint =  Sunday, July 17, 2016 10:00:00 PM */
+            var midDate = 1468792800000
+            var semester = (epoch - midDate >= 0) ? 2 : 1;
+            if (semester === 1) {
+                event[0] = 1;
+            } else {
+                event[1] = 1;
+            };
+
+            /* Output */
+            emit([id, course, year], event);
             break;
 
         default:

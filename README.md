@@ -11,7 +11,7 @@ This is a JSON file in which all extractions, transformations and loads are conf
 # Query Deployment
 Execute one of following commands from the root folder of the design document
 
-`couchapp push . http://admin:password@localhost:5984/two-way-join`
+`couchapp push . http://admin:password@localhost:5984/analysis-1`
 `couchapp push . http://admin:password@localhost:5984/three-way-join`
 `couchapp push . http://admin:password@localhost:5984/variance`
 `couchapp push . http://admin:password@localhost:5984/test`

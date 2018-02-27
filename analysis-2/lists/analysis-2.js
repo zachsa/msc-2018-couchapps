@@ -1,26 +1,40 @@
 function(head, req) {
     provides('csv', function() {
         /* Send the headers */
-        var headers = "Year,StudentAnonID,Course,Course %,Gr12 Eng %,Gr12 Sci %,Gr12 Mth %,Gr12 Mth Lit %,Gr12 Mth Adv %,NBT AL %,NBT QL %,NBT Mth %";
+        var headers = "Year,StudentAnonID,Course,Course %,Gr12 Eng %,Gr12 Sci %,Gr12 Mth %,Gr12 Mth Lit %,Gr12 Mth Adv %,NBT AL %,NBT QL %,NBT Mth %,S1 Events, S2 Events";
         send(headers);
 
         /* Helper function to send line */
         function sendLine(obj) {
-            if (obj.benchmark && obj.grade) {
-                var line =
-                    "\n" + obj.year +
-                    "," + obj.id +
-                    "," + obj.course +
-                    "," + obj["Course %"] +
-                    "," + obj["Gr12 Eng %"] +
-                    "," + obj["Gr12 Sci %"] +
-                    "," + obj["Gr12 Mth %"] +
-                    "," + obj["Gr12 Mth Lit %"] +
-                    "," + obj["Gr12 Mth Lit %"] +
-                    "," + obj["NBT AL %"] +
-                    "," + obj["NBT QL %"] +
-                    "," + obj["NBT Mth %"];
-                send(line);
+            /* Only send rows with info from all entities */
+            if (obj.benchmark && obj.event && obj.grade) {
+                /* Only send rows with all benchmarks */
+                if (
+                    obj["Course %"] !== 0 &&
+                    obj["Gr12 Eng %"] !== 0 &&
+                    obj["Gr12 Sci %"] !== 0 &&
+                    obj["Gr12 Mth %"] !== 0 &&
+                    obj["NBT AL %"] !== 0 &&
+                    obj["NBT QL %"] !== 0 &&
+                    obj["NBT Mth %"] !== 0
+                ) {
+                    var line =
+                        "\n" + obj.year +
+                        "," + obj.id +
+                        "," + obj.course +
+                        "," + obj["Course %"] +
+                        "," + obj["Gr12 Eng %"] +
+                        "," + obj["Gr12 Sci %"] +
+                        "," + obj["Gr12 Mth %"] +
+                        "," + obj["Gr12 Mth Lit %"] +
+                        "," + obj["Gr12 Mth Lit %"] +
+                        "," + obj["NBT AL %"] +
+                        "," + obj["NBT QL %"] +
+                        "," + obj["NBT Mth %"] +
+                        "," + obj.S1 +
+                        "," + obj.S2;
+                    send(line);
+                };
             };
         };
 
@@ -35,7 +49,6 @@ function(head, req) {
         var value;
 
         /* Iterate through view results */
-        var row;
         while (row = getRow()) {
 
             /* Key */
@@ -55,9 +68,13 @@ function(head, req) {
             };
 
             /* Append to/adjust current line */
-            var type = (course === 0 && year === 0) ? 'benchmark' : 'grade';
+            var type = (course === 0 && year === 0) ?
+                'benchmark' : ((course === 0) ?
+                    'event' : 'grade');
+
             switch (type) {
                 case 'benchmark':
+                    currentYear = null; // Reset currentYear
                     currentLine.benchmark = true;
                     currentLine.id = id;
                     currentLine["Gr12 Eng %"] = value[0];
@@ -70,6 +87,14 @@ function(head, req) {
                     currentLine["NBT Mth %"] = value[7];
                     break;
 
+                case 'event':
+                    currentLine.event = true;
+                    currentLine.id = id;
+                    currentLine.year = year // In case no benchmark or grade exists
+                    currentLine.S1 = value[0];
+                    currentLine.S2 = value[1];
+                    break;
+
                 case 'grade':
 
                     /* Send previous line if it is a new year */
@@ -79,7 +104,7 @@ function(head, req) {
                     };
 
                     currentLine.grade = true;
-                    currentLine.id = id; // In case no demographic doc exists
+                    currentLine.id = id; // In case no benchmark or event exists
                     currentLine.year = year;
                     currentLine.course = course;
                     currentLine["Course %"] = value;
