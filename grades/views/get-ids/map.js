@@ -15,5 +15,5 @@ function(doc) {
     if (allowedCourses.indexOf(courseCode) < 0) return;
 
     /* Emit document */
-    emit(doc._id, doc.anonIDnew);
+    emit(doc._id, { "anonIDnew": doc.anonIDnew });
 };
