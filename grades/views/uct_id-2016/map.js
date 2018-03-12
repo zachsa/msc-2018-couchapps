@@ -14,6 +14,10 @@ function(doc) {
     var allowedCourses = ['CSC1015F'];
     if (allowedCourses.indexOf(courseCode) < 0) return;
 
+    /* year filter */
+    var year = doc.RegAcadYear;
+    if (year != 2016) return;
+
     /* Emit document */
-    emit(doc._id, { "anonIDnew": doc.anonIDnew });
+    emit(doc._id, { "uct_id": doc.anonIDnew });
 };
