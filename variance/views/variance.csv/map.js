@@ -32,11 +32,6 @@ function(doc) {
     var career = doc.Career;
     var residency = doc["Citizenship Residency"];
 
-    /* Filters */
-    if (!type === 'benchmark') return;
-    if (allowedCareers.indexOf(career) < 0) return;
-    if (allowedResidence.indexOf(residency) < 0) return;
-
     /* Load Decimal library */
     var Decimal = require("views/lib/decimal");
 
@@ -54,7 +49,7 @@ function(doc) {
                 };
             };
             return a + b;
-        }));
+        }, 0));
         var divisor = new Decimal(this.length - zeros);
         return sum.dividedBy(divisor).toFixed(2);
     };
