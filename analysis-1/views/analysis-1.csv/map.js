@@ -36,10 +36,6 @@ function(doc) {
             course = doc.Course;
             year = doc.RegAcadYear;
 
-            /* Filters */
-            if (course !== 'CSC1015F') return;
-            if (RegCareer !== "UGRD") return;
-
             /* Value */
             var percent = doc.Percent || '';
 
@@ -101,10 +97,6 @@ function(doc) {
             id = doc.anonIDnew;
             course = 0;
             year = 0;
-
-            /* Filters */
-            if (allowedCareers.indexOf(career) < 0) return;
-            if (allowedResidence.indexOf(residency) < 0) return;
 
             /* Value (each index corresponds to a benchmark) */
             var benchmarks = [0, 0, 0, 0, 0, 0, 0, 0];
