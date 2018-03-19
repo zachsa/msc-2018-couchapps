@@ -74,8 +74,8 @@ function(head, req) {
 
             switch (type) {
                 case 'benchmark':
-                    currentYear = null; // Reset currentYear
                     currentLine.benchmark = true;
+                    currentYear = null; // Reset currentYear
                     currentLine.id = id;
                     currentLine["Gr12 Eng %"] = value[0];
                     currentLine["Gr12 Sci %"] = value[1];

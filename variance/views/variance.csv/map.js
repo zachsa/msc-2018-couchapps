@@ -37,28 +37,40 @@ function(doc) {
 
     /**
      * Reduce array to avg (all elements must be numbers)
-     * @param {boolean} ignoreZero 
+     * @param {boolean} ignoreNonNumeric Don't include 0s and nulls in average
      */
-    Array.prototype.avg = function(ignoreZero) {
-        ignoreZero = ignoreZero || false;
-        var zeros = 0;
+    Array.prototype.avg = function(ignoreNonNumeric) {
+        ignoreNonNumeric = ignoreNonNumeric || false;
+        var nonNumbers = 0;
+
+        /* Get summed array */
         var sum = new Decimal(this.reduce(function(a, b) {
-            if (ignoreZero) {
-                if (b === 0) {
-                    zeros++;
+            /* Only use non-0 numbers */
+            b = b || 0;
+            if (ignoreNonNumeric) {
+                /* (0 == false) = true in JavaScript */
+                if (!b) {
+                    nonNumbers++;
                 };
             };
             return a + b;
         }, 0));
-        var divisor = new Decimal(this.length - zeros);
-        return sum.dividedBy(divisor).toFixed(2);
+
+        /* Return average or 0 */
+        var x = this.length - nonNumbers;
+        if (x <= 0) {
+            throw new Error('Divisor cannot be 0');
+        } else {
+            var divisor = new Decimal(x);
+            return sum.dividedBy(divisor).toFixed(2);
+        };
     };
 
     /* Key - the Student ID */
     var id = doc.anonIDnew;
 
     /* Value (each index corresponds to a benchmark) */
-    var benchmarks = [
+    var output = [
         null, null, null, null, null, null,
         null, null, null, null, null, null,
         null, null, null, null, null, null,
@@ -76,75 +88,104 @@ function(doc) {
     };
 
     function getDemographicGrade(gr) {
-        var g = parseFloat(gr).toFixed(2);
-        var retG;
-        if (isNaN(g)) { // True for symbols, false for numbers
-            if (typeof gr !== 'string') return 0;
-            retG = fuDictionary[gr.toUpperCase().trim()] || 0;
-        } else {
-            retG = g;
+        var result;
+        try {
+            var g = parseFloat(gr).toFixed(2);
+            if (isNaN(g)) { // True for symbols, false for numbers
+                if (typeof gr !== 'string') throw new Error("Can't convert symbol to grade");
+                result = fuDictionary[gr.toUpperCase().trim()] || 0;
+            } else {
+                result = g;
+            };
+        } catch (e) {
+            result = 0;
         };
-        return retG;
+        return result;
     };
 
-    // i = 0
-    var gEng12 = Number(getDemographicGrade(doc["Eng Grd12 Fin Rslt"] || ""));
-    benchmarks[0] = gEng12;
-    // i = 1
-    var gSci12 = Number(getDemographicGrade(doc["Phy Sci Grd12 Fin Rslt"] || ""));
-    benchmarks[1] = gSci12;
-    // i = 2
-    var gMth12 = Number(getDemographicGrade(doc["Math Grd12 Fin Rslt"] || ""));
-    benchmarks[2] = gMth12;
-    // i = 3
-    var gNbtAl = Number(getDemographicGrade(doc["NBT AL Score"] || ""));
-    benchmarks[3] = gNbtAl;
-    // i = 4
-    var gNbtQl = Number(getDemographicGrade(doc["NBT QL Score"] || ""));
-    benchmarks[4] = gNbtQl;
-    // i = 5
-    var gNbtMth = Number(getDemographicGrade(doc["NBT Math Score"] || ""));
-    benchmarks[5] = gNbtMth;
-    // i = 6
-    var g12Avg = Number([gEng12, gSci12, gMth12].avg(true));
-    benchmarks[6] = g12Avg;
-    // i = 7
-    var g12AvgMth = Number([gEng12, gSci12, gMth12, gMth12].avg(true));
-    benchmarks[7] = g12AvgMth;
-    // i = 8
-    var g12AvgMthSci = Number([gEng12, gSci12, gMth12, gMth12, gSci12].avg(true));
-    benchmarks[8] = g12AvgMthSci;
-    // i = 9
-    var gNbtAvg = Number([gNbtAl, gNbtQl, gNbtMth].avg(true));
-    benchmarks[9] = gNbtAvg;
-    // i = 10
-    var gNbtAvgAl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl].avg(true));
-    benchmarks[10] = gNbtAvgAl;
-    // i = 11
-    var gNbtAvgQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl].avg(true));
-    benchmarks[11] = gNbtAvgQl;
-    // i = 12
-    var gNbtAvgMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtMth].avg(true));
-    benchmarks[12] = gNbtAvgMth;
-    // i = 13
-    var gNbtAvgAlQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtQl].avg(true));
-    benchmarks[13] = gNbtAvgAlQl;
-    // i = 14
-    var gNbtAvgAlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtAvgMth].avg(true));
-    benchmarks[14] = gNbtAvgAlMth;
-    // i = 15
-    var gNbtAvgQlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl, gNbtMth].avg(true));
-    benchmarks[15] = gNbtAvgQlMth;
-    // i = 16
-    var gGr12NbtAvg = Number([g12Avg, gNbtAvg].avg(true));
-    benchmarks[16] = gGr12NbtAvg;
-    // i = 17
-    var gGr12NbtAvgGr12Mth = Number([g12Avg, gNbtAvg, gMth12].avg(true));
-    benchmarks[17] = gGr12NbtAvgGr12Mth;
-    // i = 18
-    var gGr12NbtAvgGr12MthSci = Number([g12Avg, gNbtAvg, gMth12, gSci12].avg(true));
-    benchmarks[18] = gGr12NbtAvgGr12MthSci;
+    /* Create all benchmarks */
+    try {
+
+        // i = 0
+        var gEng12 = Number(getDemographicGrade(doc["Eng Grd12 Fin Rslt"] || null));
+        if (!gEng12) throw new Error('Ignore 0 grades');
+        output[0] = gEng12;
+        // i = 1
+        var gSci12 = Number(getDemographicGrade(doc["Phy Sci Grd12 Fin Rslt"] || null));
+        if (!gSci12) throw new Error('Ignore 0 grades');
+        output[1] = gSci12;
+        // i = 2
+        var gMth12 = Number(getDemographicGrade(doc["Math Grd12 Fin Rslt"] || null));
+        if (!gMth12) throw new Error('Ignore 0 grades');
+        output[2] = gMth12;
+        // i = 3
+        var gNbtAl = Number(getDemographicGrade(doc["NBT AL Score"] || null));
+        if (!gNbtAl) throw new Error('Ignore 0 grades');
+        output[3] = gNbtAl;
+        // i = 4
+        var gNbtQl = Number(getDemographicGrade(doc["NBT QL Score"] || null));
+        if (!gNbtQl) throw new Error('Ignore 0 grades');
+        output[4] = gNbtQl;
+        // i = 5
+        var gNbtMth = Number(getDemographicGrade(doc["NBT Math Score"] || null));
+        if (!gNbtMth) throw new Error('Ignore 0 grades');
+        output[5] = gNbtMth;
+        // i = 6
+        var g12Avg = Number([gEng12, gSci12, gMth12].avg(true));
+        output[6] = g12Avg;
+        // i = 7
+        var g12AvgMth = Number([gEng12, gSci12, gMth12, gMth12].avg(true));
+        output[7] = g12AvgMth;
+        // i = 8
+        var g12AvgMthSci = Number([gEng12, gSci12, gMth12, gMth12, gSci12].avg(true));
+        output[8] = g12AvgMthSci;
+        // i = 9
+        var gNbtAvg = Number([gNbtAl, gNbtQl, gNbtMth].avg(true));
+        output[9] = gNbtAvg;
+        // i = 10
+        var gNbtAvgAl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl].avg(true));
+        output[10] = gNbtAvgAl;
+        // i = 11
+        var gNbtAvgQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl].avg(true));
+        output[11] = gNbtAvgQl;
+        // i = 12
+        var gNbtAvgMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtMth].avg(true));
+        output[12] = gNbtAvgMth;
+        // i = 13
+        var gNbtAvgAlQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtQl].avg(true));
+        output[13] = gNbtAvgAlQl;
+        // i = 14
+        var gNbtAvgAlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtAvgMth].avg(true));
+        output[14] = gNbtAvgAlMth;
+        // i = 15
+        var gNbtAvgQlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl, gNbtMth].avg(true));
+        output[15] = gNbtAvgQlMth;
+        // i = 16
+        var gGr12NbtAvg = Number([g12Avg, gNbtAvg].avg(true));
+        output[16] = gGr12NbtAvg;
+        // i = 17
+        var gGr12NbtAvgGr12Mth = Number([g12Avg, gNbtAvg, gMth12].avg(true));
+        output[17] = gGr12NbtAvgGr12Mth;
+        // i = 18
+        var gGr12NbtAvgGr12MthSci = Number([g12Avg, gNbtAvg, gMth12, gSci12].avg(true));
+        output[18] = gGr12NbtAvgGr12MthSci;
+
+    } catch (error) {
+
+        /* Swallow known errors without emitting (by re-throwing) */
+        switch (error.message) {
+            case 'Ignore 0 grades':
+                throw error;
+                break;
+            case 'Divisor cannot be 0':
+                throw error;
+                break;
+            default:
+                output = error.message;
+                break;
+        };
+    };
 
     /* Output */
-    emit(id, benchmarks);
+    emit(id, output);
 };
