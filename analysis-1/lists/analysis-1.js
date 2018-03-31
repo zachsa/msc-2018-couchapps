@@ -4,7 +4,7 @@ function(head, req) {
 
     /**
      * x: grade
-     * y: benchmark (8 of th)
+     * y: benchmark
      */
     var stats = {
         "n": new Decimal(0),
