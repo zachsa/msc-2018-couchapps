@@ -4810,31 +4810,5 @@
 
 
     // Export.
-
-
-    // AMD.
-    if (typeof define == 'function' && define.amd) {
-        define(function() {
-            return Decimal;
-        });
-
-        // Node and other environments that support module.exports.
-    } else if (typeof module != 'undefined' && module.exports) {
-        module.exports = Decimal;
-
-        // Browser.
-    } else {
-        if (!globalScope) {
-            globalScope = typeof self != 'undefined' && self && self.self == self ?
-                self : Function('return this')();
-        }
-
-        noConflict = globalScope.Decimal;
-        Decimal.noConflict = function() {
-            globalScope.Decimal = noConflict;
-            return Decimal;
-        };
-
-        globalScope.Decimal = Decimal;
-    }
+    exports.Decimal = Decimal;
 })(this);
