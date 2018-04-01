@@ -5,18 +5,7 @@
  *    => [doc.anonIDnew, doc.Course, doc.RegAcadYear] : [doc.Percent]
  * 
  * 2) Demographics
- *    => [doc.anonIDnew, 0, 0] : [
- *         Gr12 Eng %,
- *         Gr12 Sci %,
- *         Gr12 Mth %,
- *         Gr12 Mth Lit %,
- *         Gr12 Mth Adv %,
- *         NBT AL %,
- *         NBT QL %,
- *         NBT Mth %
- *    ]
- * 
- * This Map function does not require reduce output
+ *    => [doc.anonIDnew, 0, 0] : [all benchmarks]
  * 
  * @param {Object} doc 
  */
@@ -25,6 +14,9 @@ function(doc) {
     var id;
     var course;
     var year;
+
+    /* Output */
+    var output;
 
     /* Decision tree */
     var type = doc.type_;
@@ -37,12 +29,12 @@ function(doc) {
             year = doc.RegAcadYear;
 
             /* Value */
-            var percent = doc.Percent || '';
+            var output = doc.Percent || '';
 
             /* Normalize the percent field to a number */
-            if (typeof percent !== 'number') {
-                if (typeof percent !== 'string') return;
-                var percentCleaned = percent.toUpperCase().trim();
+            if (typeof output !== 'number') {
+                if (typeof output !== 'string') return;
+                var percentCleaned = output.toUpperCase().trim();
 
                 /* Return if percent is a disallowed symbol */
                 if ([
@@ -62,30 +54,30 @@ function(doc) {
                 /* Get the percentage */
                 switch (percentCleaned) {
                     case 'F':
-                        percent = 40;
+                        output = 40;
                         break;
                     case 'DPR':
-                        percent = 30;
+                        output = 30;
                         break;
                     case 'INC':
-                        percent = 30;
+                        output = 30;
                         break;
                     case 'UF':
-                        percent = 49;
+                        output = 49;
                         break;
                     case 'UP':
-                        percent = 45;
+                        output = 45;
                         break;
                     default:
                         /* Convert percent to number */
-                        percent = parseFloat(percent.substring(0, percent.length - 1));
-                        if (isNaN(percent)) return;
+                        output = parseFloat(output.substring(0, output.length - 1));
+                        if (isNaN(output)) return;
                         break;
                 };
             };
 
             /* Output */
-            emit([id, course, year], percent);
+            emit([id, course, year], output);
             break;
 
         case 'benchmark':
@@ -123,17 +115,11 @@ function(doc) {
                 };
             };
 
-            /* Key and other fields */
-            var allowedCareers = ["UGRD", "First Year", "Second Year", "Third Year"];
-            var allowedResidence = ["SA Citizen", "Permanent Resident", "C", "P"];
-            var career = doc.Career;
-            var residency = doc["Citizenship Residency"];
+            /* Assign output variables */
             id = doc.anonIDnew;
             course = 0;
             year = 0;
-
-            /* Value (each index corresponds to a benchmark) */
-            var output = [
+            output = [
                 null, null, null, null, null, null,
                 null, null, null, null, null, null,
                 null, null, null, null, null, null,
@@ -168,7 +154,6 @@ function(doc) {
 
             /* Create all benchmarks */
             try {
-
                 // i = 0
                 var gEng12 = Number(getDemographicGrade(doc["Eng Grd12 Fin Rslt"] || null));
                 if (!gEng12) throw new Error('Ignore 0 grades');

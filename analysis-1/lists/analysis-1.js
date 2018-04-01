@@ -289,7 +289,10 @@ function(head, req) {
             /* Value */
             value = row.value;
 
-            /* Send previous line if it is a new student and then reset id */
+            /* 
+             * Send previous line if it is a new student
+             * Then reset id
+             */
             if (currentStudent !== id) {
                 updateStats(currentLine);
                 currentLine = {};
@@ -324,7 +327,6 @@ function(head, req) {
                     break;
 
                 case 'grade':
-
                     /* Send previous line if it is a new year */
                     if (currentYear !== year) {
                         updateStats(currentLine);
@@ -332,17 +334,21 @@ function(head, req) {
                     };
 
                     currentLine.grade = true;
-                    currentLine.id = id; // In case no demographic doc exists
+                    currentLine.id = id;
                     currentLine.year = year;
                     currentLine.course = course;
                     currentLine["Course %"] = value;
                     break;
 
                 default:
-                    continue;
+                    break;
             };
         };
 
+        /* Update for last row in index */
+        updateStats(currentLine);
+
+        /* Function to calculate correlation */
         function getR(N, a, b, c, d, e) {
             var nxy = new Decimal(N.times(a));
             var xy = new Decimal(b.times(c));
@@ -356,9 +362,6 @@ function(head, req) {
             var rXY_0_denominator = new Decimal(Decimal.sqrt(rXY_0_denominatorLeft.times(rXY_0_denominatorRight)));
             return rXYnumerator.div(rXY_0_denominator).toFixed(3);
         }
-
-        /* Update for last row in index */
-        updateStats(currentLine);
 
         /* Work out correlation coefficients */
         var N = stats.n;
@@ -554,7 +557,7 @@ function(head, req) {
         );
 
         /* Append to HTML */
-        var row = '\
+        html += '\
         <tr>\
             <td>Gr12 Eng %</td>\
             <td style="text-align:center;">' + rXY_0 + '</td>\
@@ -630,8 +633,7 @@ function(head, req) {
         <tr>\
             <td>Avg Gr12 & NBT (Dbl Gr12 Mth & Sci)</td>\
             <td style="text-align:center;">' + rXY_18 + '</td>\
-        </tr>'
-        html += row;
+        </tr>';
 
         /* Close HTML */
         html += '\
