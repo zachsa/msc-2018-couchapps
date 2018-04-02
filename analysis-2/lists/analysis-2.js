@@ -53,11 +53,21 @@ function(head, req) {
         stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
     });
 
+    function findCorrelations() {
+        // todo;
+    };
+
     /* Correlate gradeDeltaBenchmark */
-    function findCorrelation() {
+    function updateStats() {
+
+        /* For each student */
         Object.keys(deltaRank).forEach(function(id) {
+
+            /* There are 19 delta values */
             (19).times(function(i) {
-                return 1;
+
+                /* Update running stats for each delta */
+                // todo
             });
         });
         return deltaRank;
@@ -252,15 +262,18 @@ function(head, req) {
         /* Work out rank change */
         findRankings();
 
-        /* Work out correlation between rank change and Sakai usage */
-        var p = findCorrelation();
+        /* Cycle through deltaRanks and create correlation vars */
+        updateStats();
+
+        /* Work out the correlation coefficients */
+        findCorrelations();
 
         /* Append to table */
         (function() {
             (1).times(function(i) {
                 html += '<tr>\
                             <td>' + bKey['rXY_' + i] + '</td>\
-                            <td style="text-align:center;">' + JSON.stringify(p) + '</td>\
+                            <td style="text-align:center;">' + 'hi' + '</td>\
                         </tr>';
             });
         })();
