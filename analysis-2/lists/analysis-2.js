@@ -1,51 +1,83 @@
 function(head, req) {
     /* Load the Decimal library */
     var Decimal = require("views/lib/decimal");
+    var bKey = {
+        rXY_0: 'Gr12 Eng',
+        rXY_1: 'Gr12 Sci',
+        rXY_2: 'Gr12 Mth',
+        rXY_3: 'NBT AL',
+        rXY_4: 'NBT QL',
+        rXY_5: 'NBT Mth',
+        rXY_6: 'Gr12 Results Avg',
+        rXY_7: 'Double Mth weight',
+        rXY_8: 'Double Mth & Sci weight',
+        rXY_9: 'NBT Results Avg',
+        rXY_10: 'Double NBT AL',
+        rXY_11: 'Double NBT QL',
+        rXY_12: 'Double NBT Mth',
+        rXY_13: 'Double NBT AL/QL',
+        rXY_14: 'Double NBT AL/Mth',
+        rXY_15: 'Double NBT QL/Mth',
+        rXY_16: 'Avg of NBT & Gr12',
+        rXY_17: 'Double Gr 12 Mth weight',
+        rXY_18: 'Double Gr12 Mth & Sci weight'
+    };
 
-    /* Ranked benchmarks*/
-    var benchmarkRanks = {
-        benchmark_0_Rank: [],
-        benchmark_1_Rank: [],
-        benchmark_2_Rank: [],
-        benchmark_3_Rank: [],
-        benchmark_4_Rank: [],
-        benchmark_5_Rank: [],
-        benchmark_6_Rank: [],
-        benchmark_7_Rank: [],
-        benchmark_8_Rank: [],
-        benchmark_9_Rank: [],
-        benchmark_10_Rank: [],
-        benchmark_11_Rank: [],
-        benchmark_12_Rank: [],
-        benchmark_13_Rank: [],
-        benchmark_14_Rank: [],
-        benchmark_15_Rank: [],
-        benchmark_16_Rank: [],
-        benchmark_17_Rank: [],
-        benchmark_18_Rank: [],
-    }
+    /* Shorthand loop creation */
+    Number.prototype.times = function(cb) {
+        for (var i = 0; i < this; i++) {
+            cb.call(this, i);
+        };
+    };
 
-    /* Ranked grades */
-    var gradeRank = [];
-
-    /* Rank change */
     var deltaRank = {};
+    var RANKS = { grades: [] };
+    (19).times(function(i) {
+        RANKS['benchmark_' + i] = [];
+    });
+
+    function correlate() {};
+
+    /**
+     * x: S1 event count
+     * y: change in ranking (grade - benchmark)
+     */
+    var stats = {
+        "n": new Decimal(0),
+        "runningSum(x)": new Decimal(0),
+        "runningSum(x^2)": new Decimal(0)
+    };
+    (19).times(function(i) {
+        stats["runningSum(xy_" + i + ")"] = new Decimal(0);
+        stats["runningSum(y_" + i + ")"] = new Decimal(0);
+        stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
+    });
+
+    /* Correlate gradeDeltaBenchmark */
+    function findCorrelation() {
+        Object.keys(deltaRank).forEach(function(id) {
+            (19).times(function(i) {
+                return 1;
+            });
+        });
+        return deltaRank;
+    };
 
     /* Populate deltaRank object */
     function findRankings() {
-        var c = gradeRank.length;
+        var c = RANKS.grades.length;
         for (var j = 0; j < c; j++) {
-            var tuple = gradeRank[j];
+            var tuple = RANKS.grades[j];
             var grade = tuple[0];
             var id = tuple[1];
             deltaRank[id] = {};
-            deltaRank[id].gradeRank = gradeRank.findIndex(function(el) {
+            deltaRank[id].gradeRank = RANKS.grades.findIndex(function(el) {
                 return (el[1] === id);
             }) + 1;
 
             for (var i = 0; i <= 18; i++) {
-                var b = 'benchmark_' + i + '_Rank';
-                deltaRank[id][b] = benchmarkRanks[b].findIndex(function(el) {
+                var b = 'benchmark_' + i;
+                deltaRank[id][b] = RANKS[b].findIndex(function(el) {
                     return (el[1] === id);
                 }) + 1;
                 deltaRank[id]['delta_' + i] = deltaRank[id].gradeRank - deltaRank[id][b];
@@ -96,12 +128,18 @@ function(head, req) {
                 obj[5] !== 0
             ) {
                 /* Get grade rank */
-                gradeRank.insertAndSort([obj["Course %"], obj.id]);
+                RANKS.grades.insertAndSort([obj["Course %"], obj.id]);
 
-                /* Get benchmark rank */
-                for (var i = 0; i <= 18; i++) {
-                    benchmarkRanks['benchmark_' + i + '_Rank'].insertAndSort([obj[i], obj.id]);
-                };
+                /* Get benchmark ranks */
+                (19).times(function(i) {
+                    RANKS['benchmark_' + i].insertAndSort([obj[i], obj.id]);
+                });
+
+                /* Update stats */
+                stats.n = stats.n.plus(new Decimal(1));
+                var x = new Decimal(obj.S1);
+                stats["runningSum(x)"] = stats["runningSum(x)"].plus(x);
+                stats["runningSum(x^2)"] = stats["runningSum(x^2)"].plus(x.pow(2));
             };
         };
     };
@@ -115,7 +153,7 @@ function(head, req) {
             <title>Variance &amp; Std Deviation Analysis</title>\
         </head>\
         <body>\
-            <table style="width:30%;margin:auto;">\
+            <table style="width:50%;margin:auto;">\
                 <thead>\
                     <tr>\
                         <th style="width:50%;">Benchmarking method</th>\
@@ -215,11 +253,16 @@ function(head, req) {
         findRankings();
 
         /* Work out correlation between rank change and Sakai usage */
+        var p = findCorrelation();
+
+        /* Append to table */
         (function() {
-            html += '<tr>\
-                        <td>x</td>\
-                        <td style="text-align:center;">' + JSON.stringify(deltaRank["3119328"]) + '</td>\
-                    </tr>';
+            (1).times(function(i) {
+                html += '<tr>\
+                            <td>' + bKey['rXY_' + i] + '</td>\
+                            <td style="text-align:center;">' + JSON.stringify(p) + '</td>\
+                        </tr>';
+            });
         })();
 
         /* Close HTML */

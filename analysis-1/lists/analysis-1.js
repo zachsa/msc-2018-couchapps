@@ -2,9 +2,46 @@ function(head, req) {
     /* Load the Decimal library */
     var Decimal = require("views/lib/decimal");
 
-    Number.prototype.from0 = function(cb) {
-        for (var i = 0; i <= this; i++) {
-            cb(i);
+    function correlate(N, a, b, c, d, e) {
+        var nxy = new Decimal(N.times(a));
+        var xy = new Decimal(b.times(c));
+        var rXYnumerator = new Decimal(nxy.minus(xy));
+        var nx2 = new Decimal(N.times(d));
+        var x_2 = new Decimal(b.pow(2));
+        var ny_2 = new Decimal(N.times(e));
+        var y_2 = new Decimal(c.pow(2));
+        var rXY_0_denominatorLeft = new Decimal(nx2.minus(x_2));
+        var rXY_0_denominatorRight = new Decimal(ny_2.minus(y_2));
+        var rXY_0_denominator = new Decimal(Decimal.sqrt(rXY_0_denominatorLeft.times(rXY_0_denominatorRight)));
+        return rXYnumerator.div(rXY_0_denominator).toFixed(3);
+    };
+
+    var bKey = {
+        rXY_0: 'Gr12 Eng',
+        rXY_1: 'Gr12 Sci',
+        rXY_2: 'Gr12 Mth',
+        rXY_3: 'NBT AL',
+        rXY_4: 'NBT QL',
+        rXY_5: 'NBT Mth',
+        rXY_6: 'Gr12 Results Avg',
+        rXY_7: 'Double Mth weight',
+        rXY_8: 'Double Mth & Sci weight',
+        rXY_9: 'NBT Results Avg',
+        rXY_10: 'Double NBT AL',
+        rXY_11: 'Double NBT QL',
+        rXY_12: 'Double NBT Mth',
+        rXY_13: 'Double NBT AL/QL',
+        rXY_14: 'Double NBT AL/Mth',
+        rXY_15: 'Double NBT QL/Mth',
+        rXY_16: 'Avg of NBT & Gr12',
+        rXY_17: 'Double Gr 12 Mth weight',
+        rXY_18: 'Double Gr12 Mth & Sci weight'
+    };
+
+    /* Shorthand loop creation */
+    Number.prototype.times = function(cb) {
+        for (var i = 0; i < this; i++) {
+            cb.call(this, i);
         };
     };
 
@@ -17,7 +54,7 @@ function(head, req) {
         "runningSum(x)": new Decimal(0),
         "runningSum(x^2)": new Decimal(0)
     };
-    (18).from0(function(i) {
+    (19).times(function(i) {
         stats["runningSum(xy_" + i + ")"] = new Decimal(0);
         stats["runningSum(y_" + i + ")"] = new Decimal(0);
         stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
@@ -46,11 +83,11 @@ function(head, req) {
                 stats["runningSum(x^2)"] = stats["runningSum(x^2)"].plus(x.pow(2));
 
                 /* i */
-                (18).from0(function(i) {
-                    stats["y_" + i] = new Decimal(obj[i]);
-                    stats["runningSum(xy_" + i + ")"] = stats["runningSum(xy_" + i + ")"].plus(x.times(stats["y_" + i]));
-                    stats["runningSum(y_" + i + ")"] = stats["runningSum(y_" + i + ")"].plus(stats["y_" + i]);
-                    stats["runningSum(y_" + i + "^2)"] = stats["runningSum(y_" + i + "^2)"].plus(stats["y_" + i].pow(2));
+                (19).times(function(i) {
+                    var current = new Decimal(obj[i]);
+                    stats["runningSum(xy_" + i + ")"] = stats["runningSum(xy_" + i + ")"].plus(x.times(current));
+                    stats["runningSum(y_" + i + ")"] = stats["runningSum(y_" + i + ")"].plus(current);
+                    stats["runningSum(y_" + i + "^2)"] = stats["runningSum(y_" + i + "^2)"].plus(current.pow(2));
                 });
             };
         };
@@ -65,7 +102,7 @@ function(head, req) {
             <title>Variance &amp; Std Deviation Analysis</title>\
         </head>\
         <body>\
-            <table style="width:30%;margin:auto;">\
+            <table style="width:40%;margin:auto;">\
                 <thead>\
                     <tr>\
                         <th style="width:50%;">Benchmarking method</th>\
@@ -140,26 +177,11 @@ function(head, req) {
         /* Update for last row in index */
         updateStats(currentLine);
 
-        /* Function to calculate correlation */
-        function correlate(N, a, b, c, d, e) {
-            var nxy = new Decimal(N.times(a));
-            var xy = new Decimal(b.times(c));
-            var rXYnumerator = new Decimal(nxy.minus(xy));
-            var nx2 = new Decimal(N.times(d));
-            var x_2 = new Decimal(b.pow(2));
-            var ny_2 = new Decimal(N.times(e));
-            var y_2 = new Decimal(c.pow(2));
-            var rXY_0_denominatorLeft = new Decimal(nx2.minus(x_2));
-            var rXY_0_denominatorRight = new Decimal(ny_2.minus(y_2));
-            var rXY_0_denominator = new Decimal(Decimal.sqrt(rXY_0_denominatorLeft.times(rXY_0_denominatorRight)));
-            return rXYnumerator.div(rXY_0_denominator).toFixed(3);
-        }
-
         /* Work out correlation coefficients */
         var N = stats.n;
 
         /* i */
-        (18).from0(function(i) {
+        (19).times(function(i) {
             stats["rXY_" + i] = correlate(
                 N,
                 stats["runningSum(xy_" + i + ")"],
@@ -171,10 +193,10 @@ function(head, req) {
         });
 
         /* Append to HTML */
-        (18).from0(function(i) {
+        (19).times(function(i) {
             html += '\
             <tr>\
-                <td>rXY_' + i + '</td>\
+                <td>' + bKey['rXY_' + i] + '</td>\
                 <td style="text-align:center;">' + stats["rXY_" + i] + '</td>\
             </tr>';
         });
