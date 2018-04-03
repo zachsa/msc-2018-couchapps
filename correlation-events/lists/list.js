@@ -68,7 +68,7 @@ function(head, req) {
      * This maps back to useful text descriptions
      * For HTML output
      */
-    var bKey = {
+    var keyMap = {
         rXY_0: 'Gr12 Eng',
         rXY_1: 'Gr12 Sci',
         rXY_2: 'Gr12 Mth',
@@ -91,16 +91,36 @@ function(head, req) {
     };
 
     /**
+     * Return correlation coefficient
+     */
+    function correlate(N, a, b, c, d, e) {
+        var nxy = new Decimal(N.times(a));
+        var xy = new Decimal(b.times(c));
+        var rXYnumerator = new Decimal(nxy.minus(xy));
+        var nx2 = new Decimal(N.times(d));
+        var x_2 = new Decimal(b.pow(2));
+        var ny_2 = new Decimal(N.times(e));
+        var y_2 = new Decimal(c.pow(2));
+        var rXY_0_denominatorLeft = new Decimal(nx2.minus(x_2));
+        var rXY_0_denominatorRight = new Decimal(ny_2.minus(y_2));
+        var rXY_0_denominator = new Decimal(Decimal.sqrt(rXY_0_denominatorLeft.times(rXY_0_denominatorRight)));
+        return rXYnumerator.div(rXY_0_denominator).toFixed(3);
+    };
+
+    /**
      * As index is processed, RANKS are built up
      *   => for grades
      *   => for each student
      * Each list contains tuples: [%, Id]
      * Each list is then sorted by i = 0;
      */
-    var RANKS = { grades: [] };
-    (19).times(function(i) {
-        RANKS['benchmark_' + i] = [];
-    });
+    var RANKS;
+    (function() {
+        RANKS = { grades: [] };
+        (19).times(function(i) {
+            RANKS['benchmark_' + i] = [];
+        });
+    })();
 
     /**
      * All ranks for a course need to be worked out before rank change
@@ -113,19 +133,22 @@ function(head, req) {
      * x: S1 event count
      * y: Change in ranking (grade - benchmark)
      */
-    var stats = {
-        "n": new Decimal(0),
-        "runningSum(x)": new Decimal(0),
-        "runningSum(x^2)": new Decimal(0)
-    };
-    (19).times(function(i) {
-        stats["runningSum(xy_" + i + ")"] = new Decimal(0);
-        stats["runningSum(y_" + i + ")"] = new Decimal(0);
-        stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
-    });
+    var stats;
+    (function() {
+        stats = {
+            "n": new Decimal(0),
+            "runningSum(x)": new Decimal(0),
+            "runningSum(x^2)": new Decimal(0)
+        };
+        (19).times(function(i) {
+            stats["runningSum(xy_" + i + ")"] = new Decimal(0);
+            stats["runningSum(y_" + i + ")"] = new Decimal(0);
+            stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
+        });
+    })();
 
     /* Process current student */
-    function processStudent(obj) {
+    function doJoin(obj) {
         if (obj.benchmark && obj.grade && obj.event) {
             if (
                 obj["Course %"] !== 0 &&
@@ -167,22 +190,18 @@ function(head, req) {
         var year;
         var value;
         while (row = getRow()) {
-
-            /* Key */
             key = row.key;
             id = key[0];
             course = key[1];
             year = key[2];
-
-            /* Value */
             value = row.value;
 
             /* 
-             * Send previous line if it is a new student
+             * Process previous line if it is a new student
              * Then reset id
              */
             if (currentStudent !== id) {
-                processStudent(currentLine);
+                doJoin(currentLine);
                 currentLine = {};
                 currentStudent = id;
             };
@@ -210,6 +229,11 @@ function(head, req) {
                     break;
 
                 case 'grade':
+                    /* Send previous line if it is a new year */
+                    if (currentYear !== year) {
+                        doJoin(currentLine);
+                        currentYear = year;
+                    };
                     currentLine.grade = true;
                     currentLine.id = id;
                     currentLine.year = year;
@@ -224,7 +248,7 @@ function(head, req) {
         }; /* close while */
 
         /* process last CSV line */
-        processStudent(currentLine);
+        doJoin(currentLine);
 
         /**
          * Now that there is a list of benchmarks and grades ordered by %
@@ -262,6 +286,8 @@ function(head, req) {
          */
         (function() {
             var studentNumbers = Object.keys(deltaRank);
+
+            /* Update N for stats calcs later */
             stats.n = new Decimal(studentNumbers.length);
 
             /* For each student */
@@ -273,31 +299,40 @@ function(head, req) {
                 stats["runningSum(x)"] = stats["runningSum(x)"].plus(x);
                 stats["runningSum(x^2)"] = stats["runningSum(x^2)"].plus(x.pow(2));
 
-                /* There are 19 delta values */
+                /* Update running stats for each benchmark delta */
                 (19).times(function(i) {
-                    var thisDelta = new Decimal(student['delta_' + i]);
-                    /* Update running stats for each delta */
-                    /* Update stats */
+                    var currentDelta = new Decimal(student['delta_' + i]);
+                    stats["runningSum(xy_" + i + ")"] = stats["runningSum(xy_" + i + ")"].plus(x.times(currentDelta));
+                    stats["runningSum(y_" + i + ")"] = stats["runningSum(y_" + i + ")"].plus(currentDelta);
+                    stats["runningSum(y_" + i + "^2)"] = stats["runningSum(y_" + i + "^2)"].plus(currentDelta.pow(2));
                 });
             });
             return deltaRank;
         })();
 
-        /**
-         * Work out correlation coefficients from the stats object
-         */
+        /* Work out r values */
         (function() {
-            // todo
+            var N = stats.n;
+            (19).times(function(i) {
+                stats["rXY_" + i] = correlate(
+                    N,
+                    stats["runningSum(xy_" + i + ")"],
+                    stats["runningSum(x)"],
+                    stats["runningSum(y_" + i + ")"],
+                    stats["runningSum(x^2)"],
+                    stats["runningSum(y_" + i + "^2)"]
+                );
+            });
         })();
 
         /* Build HTML output */
         (function() {
-            (10).times(function(i) {
+            (19).times(function(i) {
                 html += '\
-                <tr>\
-                    <td>' + bKey['rXY_' + i] + '</td>\
-                    <td style="text-align:center;">' + 'hi' + '</td>\
-                </tr>';
+                    <tr>\
+                        <td>' + keyMap['rXY_' + i] + '</td>\
+                        <td style="text-align:center;">' + stats['rXY_' + i] + '</td>\
+                    </tr>';
             });
         })();
 

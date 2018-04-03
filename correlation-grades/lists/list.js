@@ -33,7 +33,7 @@ function(head, req) {
      * This maps back to useful text descriptions
      * For HTML output
      */
-    var bKey = {
+    var keyMap = {
         rXY_0: 'Gr12 Eng',
         rXY_1: 'Gr12 Sci',
         rXY_2: 'Gr12 Mth',
@@ -56,7 +56,7 @@ function(head, req) {
     };
 
     /**
-     * Helper function to work out correlation coefficient
+     * Return correlation coefficient
      */
     function correlate(N, a, b, c, d, e) {
         var nxy = new Decimal(N.times(a));
@@ -76,19 +76,22 @@ function(head, req) {
      * x: grade
      * y: benchmark
      */
-    var stats = {
-        "n": new Decimal(0),
-        "runningSum(x)": new Decimal(0),
-        "runningSum(x^2)": new Decimal(0)
-    };
-    (19).times(function(i) {
-        stats["runningSum(xy_" + i + ")"] = new Decimal(0);
-        stats["runningSum(y_" + i + ")"] = new Decimal(0);
-        stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
-    });
+    var stats;
+    (function() {
+        stats = {
+            "n": new Decimal(0),
+            "runningSum(x)": new Decimal(0),
+            "runningSum(x^2)": new Decimal(0)
+        };
+        (19).times(function(i) {
+            stats["runningSum(xy_" + i + ")"] = new Decimal(0);
+            stats["runningSum(y_" + i + ")"] = new Decimal(0);
+            stats["runningSum(y_" + i + "^2)"] = new Decimal(0);
+        });
+    })();
 
     /* Helper function to update stats */
-    function updateStats(obj) {
+    function doJoin(obj) {
         if (obj.benchmark && obj.grade) {
             if (
                 obj["Course %"] !== 0 &&
@@ -107,7 +110,7 @@ function(head, req) {
                 stats["runningSum(x)"] = stats["runningSum(x)"].plus(x);
                 stats["runningSum(x^2)"] = stats["runningSum(x^2)"].plus(x.pow(2));
 
-                /* i */
+                /* Benchmarks */
                 (19).times(function(i) {
                     var current = new Decimal(obj[i]);
                     stats["runningSum(xy_" + i + ")"] = stats["runningSum(xy_" + i + ")"].plus(x.times(current));
@@ -131,22 +134,18 @@ function(head, req) {
         var year;
         var value;
         while (row = getRow()) {
-
-            /* Key */
             key = row.key;
             id = key[0];
             course = key[1];
             year = key[2];
-
-            /* Value */
             value = row.value;
 
             /* 
-             * Send previous line if it is a new student
+             * Process previous line if it is a new student
              * Then reset id
              */
             if (currentStudent !== id) {
-                updateStats(currentLine);
+                doJoin(currentLine);
                 currentLine = {};
                 currentStudent = id;
             };
@@ -157,18 +156,17 @@ function(head, req) {
                 case 'benchmark':
                     currentLine.benchmark = true;
                     currentLine.id = id;
-                    for (var i = 0; i <= 18; i++) {
+                    (19).times(function(i) {
                         currentLine[i] = value[i];
-                    };
+                    });
                     break;
 
                 case 'grade':
                     /* Send previous line if it is a new year */
                     if (currentYear !== year) {
-                        updateStats(currentLine);
+                        doJoin(currentLine);
                         currentYear = year;
                     };
-
                     currentLine.grade = true;
                     currentLine.id = id;
                     currentLine.year = year;
@@ -182,31 +180,33 @@ function(head, req) {
         }; /* close while */
 
         /* process last CSV line */
-        updateStats(currentLine);
+        doJoin(currentLine);
 
-        /**
-         * Get correlation between grade and each benchmark
-         */
-        var N = stats.n;
-        (19).times(function(i) {
-            stats["rXY_" + i] = correlate(
-                N,
-                stats["runningSum(xy_" + i + ")"],
-                stats["runningSum(x)"],
-                stats["runningSum(y_" + i + ")"],
-                stats["runningSum(x^2)"],
-                stats["runningSum(y_" + i + "^2)"]
-            );
-        });
+        /* Create correlation values */
+        (function() {
+            var N = stats.n;
+            (19).times(function(i) {
+                stats["rXY_" + i] = correlate(
+                    N,
+                    stats["runningSum(xy_" + i + ")"],
+                    stats["runningSum(x)"],
+                    stats["runningSum(y_" + i + ")"],
+                    stats["runningSum(x^2)"],
+                    stats["runningSum(y_" + i + "^2)"]
+                );
+            });
+        })();
 
         /* Build HTML output */
-        (19).times(function(i) {
-            html += '\
-            <tr>\
-                <td>' + bKey['rXY_' + i] + '</td>\
-                <td style="text-align:center;">' + stats["rXY_" + i] + '</td>\
-            </tr>';
-        });
+        (function() {
+            (19).times(function(i) {
+                html += '\
+                <tr>\
+                    <td>' + keyMap['rXY_' + i] + '</td>\
+                    <td style="text-align:center;">' + stats["rXY_" + i] + '</td>\
+                </tr>';
+            });
+        })();
 
         /* Close HTML */
         html += '\
