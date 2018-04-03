@@ -91,7 +91,7 @@ function(head, req) {
     })();
 
     /* Helper function to update stats */
-    function doJoin(obj) {
+    function performJoin(obj) {
         if (obj.benchmark && obj.grade) {
             if (
                 obj["Course %"] !== 0 &&
@@ -127,7 +127,7 @@ function(head, req) {
         var row;
         var currentStudent = null;
         var currentYear = null;
-        var currentLine = {};
+        var currentStudentObj = {};
         var key;
         var id;
         var course;
@@ -145,8 +145,8 @@ function(head, req) {
              * Then reset id
              */
             if (currentStudent !== id) {
-                doJoin(currentLine);
-                currentLine = {};
+                performJoin(currentStudentObj);
+                currentStudentObj = {};
                 currentStudent = id;
             };
 
@@ -154,24 +154,24 @@ function(head, req) {
             var type = (course === 0 && year === 0) ? 'benchmark' : 'grade';
             switch (type) {
                 case 'benchmark':
-                    currentLine.benchmark = true;
-                    currentLine.id = id;
+                    currentStudentObj.benchmark = true;
+                    currentStudentObj.id = id;
                     (19).times(function(i) {
-                        currentLine[i] = value[i];
+                        currentStudentObj[i] = value[i];
                     });
                     break;
 
                 case 'grade':
                     /* Send previous line if it is a new year */
                     if (currentYear !== year) {
-                        doJoin(currentLine);
+                        performJoin(currentStudentObj);
                         currentYear = year;
                     };
-                    currentLine.grade = true;
-                    currentLine.id = id;
-                    currentLine.year = year;
-                    currentLine.course = course;
-                    currentLine["Course %"] = value;
+                    currentStudentObj.grade = true;
+                    currentStudentObj.id = id;
+                    currentStudentObj.year = year;
+                    currentStudentObj.course = course;
+                    currentStudentObj["Course %"] = value;
                     break;
 
                 default:
@@ -180,7 +180,7 @@ function(head, req) {
         }; /* close while */
 
         /* process last CSV line */
-        doJoin(currentLine);
+        performJoin(currentStudentObj);
 
         /* Create correlation values */
         (function() {
