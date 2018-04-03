@@ -292,7 +292,7 @@ function(head, req) {
 
         /* Build HTML output */
         (function() {
-            (1).times(function(i) {
+            (10).times(function(i) {
                 html += '\
                 <tr>\
                     <td>' + bKey['rXY_' + i] + '</td>\
