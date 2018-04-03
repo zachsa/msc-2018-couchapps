@@ -1,21 +1,38 @@
 function(head, req) {
-    /* Load the Decimal library */
     var Decimal = require("views/lib/decimal");
 
-    function correlate(N, a, b, c, d, e) {
-        var nxy = new Decimal(N.times(a));
-        var xy = new Decimal(b.times(c));
-        var rXYnumerator = new Decimal(nxy.minus(xy));
-        var nx2 = new Decimal(N.times(d));
-        var x_2 = new Decimal(b.pow(2));
-        var ny_2 = new Decimal(N.times(e));
-        var y_2 = new Decimal(c.pow(2));
-        var rXY_0_denominatorLeft = new Decimal(nx2.minus(x_2));
-        var rXY_0_denominatorRight = new Decimal(ny_2.minus(y_2));
-        var rXY_0_denominator = new Decimal(Decimal.sqrt(rXY_0_denominatorLeft.times(rXY_0_denominatorRight)));
-        return rXYnumerator.div(rXY_0_denominator).toFixed(3);
+    /**
+     * Provide a shorthand way of writing a for loop
+     * @param {Function} callback
+     */
+    Number.prototype.times = function(callback) {
+        for (var i = 0; i < this; i++) {
+            callback.call(this, i);
+        };
     };
 
+    /* Open HTML */
+    var html = '\
+    <!DOCTYPE html>\
+    <html>\
+    <head>\
+        <title>Variance &amp; Std Deviation Analysis</title>\
+    </head>\
+    <body>\
+        <table style="width:40%;margin:auto;">\
+            <thead>\
+                <tr>\
+                    <th style="width:50%;">Benchmarking method</th>\
+                    <th style="width:50%;">Correlation coefficient</th>\
+                </tr>\
+            </thead>\
+            <tbody>';
+
+    /**
+     * rXY_? allows for greatly reducing LOC
+     * This maps back to useful text descriptions
+     * For HTML output
+     */
     var bKey = {
         rXY_0: 'Gr12 Eng',
         rXY_1: 'Gr12 Sci',
@@ -38,11 +55,21 @@ function(head, req) {
         rXY_18: 'Double Gr12 Mth & Sci weight'
     };
 
-    /* Shorthand loop creation */
-    Number.prototype.times = function(cb) {
-        for (var i = 0; i < this; i++) {
-            cb.call(this, i);
-        };
+    /**
+     * Helper function to work out correlation coefficient
+     */
+    function correlate(N, a, b, c, d, e) {
+        var nxy = new Decimal(N.times(a));
+        var xy = new Decimal(b.times(c));
+        var rXYnumerator = new Decimal(nxy.minus(xy));
+        var nx2 = new Decimal(N.times(d));
+        var x_2 = new Decimal(b.pow(2));
+        var ny_2 = new Decimal(N.times(e));
+        var y_2 = new Decimal(c.pow(2));
+        var rXY_0_denominatorLeft = new Decimal(nx2.minus(x_2));
+        var rXY_0_denominatorRight = new Decimal(ny_2.minus(y_2));
+        var rXY_0_denominator = new Decimal(Decimal.sqrt(rXY_0_denominatorLeft.times(rXY_0_denominatorRight)));
+        return rXYnumerator.div(rXY_0_denominator).toFixed(3);
     };
 
     /**
@@ -62,9 +89,7 @@ function(head, req) {
 
     /* Helper function to update stats */
     function updateStats(obj) {
-        /* Only take lines with benchmark and grade */
         if (obj.benchmark && obj.grade) {
-            /* Only send rows with all benchmarks */
             if (
                 obj["Course %"] !== 0 &&
                 obj[0] !== 0 &&
@@ -94,24 +119,9 @@ function(head, req) {
     };
 
     provides('html', function() {
-        /* Open HTML */
-        var html = '\
-        <!DOCTYPE html>\
-        <html>\
-        <head>\
-            <title>Variance &amp; Std Deviation Analysis</title>\
-        </head>\
-        <body>\
-            <table style="width:40%;margin:auto;">\
-                <thead>\
-                    <tr>\
-                        <th style="width:50%;">Benchmarking method</th>\
-                        <th style="width:50%;">Correlation coefficient</th>\
-                    </tr>\
-                </thead>\
-                <tbody>';
 
-        /* Current function scope variables */
+        /* Iterate through view results */
+        var row;
         var currentStudent = null;
         var currentYear = null;
         var currentLine = {};
@@ -120,9 +130,6 @@ function(head, req) {
         var course;
         var year;
         var value;
-
-        /* Iterate through view results */
-        var row;
         while (row = getRow()) {
 
             /* Key */
@@ -172,15 +179,15 @@ function(head, req) {
                 default:
                     break;
             };
-        };
+        }; /* close while */
 
-        /* Update for last row in index */
+        /* process last CSV line */
         updateStats(currentLine);
 
-        /* Work out correlation coefficients */
+        /**
+         * Get correlation between grade and each benchmark
+         */
         var N = stats.n;
-
-        /* i */
         (19).times(function(i) {
             stats["rXY_" + i] = correlate(
                 N,
@@ -192,7 +199,7 @@ function(head, req) {
             );
         });
 
-        /* Append to HTML */
+        /* Build HTML output */
         (19).times(function(i) {
             html += '\
             <tr>\
