@@ -80,7 +80,7 @@ function(doc) {
             emit([id, course, year], output);
             break;
 
-        case 'benchmark':
+        case 'admission':
             /* Load Decimal  */
             var Decimal = require("views/lib/decimal");
 
