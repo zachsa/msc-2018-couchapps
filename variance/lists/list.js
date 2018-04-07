@@ -60,17 +60,9 @@ function(head, req) {
             var count = new Decimal(item.count);
             var sumsqr = new Decimal(item.sumsqr);
             var sqrsum = new Decimal(sum.pow(2));
-            var top = new Decimal(sqrsum.minus(new Decimal(sqrsum.div(count))));
+            var top = new Decimal(sumsqr.minus(new Decimal(sqrsum.div(count))));
             var sampleVariance = top.div(count - 1);
             var stdDev = new Decimal(sampleVariance).sqrt();
-
-            // var sum = item.sum;
-            // var count = item.count;
-            // var sumsqr = item.sumsqr;
-            // var sqrsum = Math.pow(sum, 2)
-            // var top = sumsqr - (sqrsum / count);
-            // var sampleVariance = top / (count - 1);
-            // var stdDev = Math.sqrt(sampleVariance);
 
             var row = '\
             <tr>\
