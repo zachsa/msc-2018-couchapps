@@ -9,8 +9,9 @@ This is a JSON file in which all extractions, transformations and loads are conf
 
 
 # Query Deployment
-`couchapp push . http://admin:password@localhost:5984/analysis-1`
-`couchapp push . http://admin:password@localhost:5984/analysis-2`
-`couchapp push . http://admin:password@localhost:5984/variance`
-`couchapp push . http://admin:password@localhost:5984/test`
 `couchapp push . http://admin:password@localhost:5984/grades`
+`couchapp push . http://admin:password@localhost:5984/variance-benchmarks`
+`couchapp push . http://admin:password@localhost:5984/correlation-grades`
+`couchapp push . http://admin:password@localhost:5984/analysis-2`
+
+`couchapp push . http://admin:password@localhost:5984/test`

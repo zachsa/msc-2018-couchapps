@@ -29,7 +29,6 @@ function(doc) {
     var allowedCareers = ["UGRD", "First Year", "Second Year", "Third Year"];
     var allowedResidence = ["SA Citizen", "Permanent Resident", "C", "P"];
     var type = doc.type_ || null;
-    var career = doc.Career;
     var residency = doc["Citizenship Residency"];
 
     /* Load Decimal library */
@@ -104,87 +103,70 @@ function(doc) {
     };
 
     /* Create all benchmarks */
-    try {
 
-        // i = 0
-        var gEng12 = Number(getDemographicGrade(doc["Eng Grd12 Fin Rslt"] || null));
-        if (!gEng12) throw new Error('Ignore 0 grades');
-        output[0] = gEng12;
-        // i = 1
-        var gSci12 = Number(getDemographicGrade(doc["Phy Sci Grd12 Fin Rslt"] || null));
-        if (!gSci12) throw new Error('Ignore 0 grades');
-        output[1] = gSci12;
-        // i = 2
-        var gMth12 = Number(getDemographicGrade(doc["Math Grd12 Fin Rslt"] || null));
-        if (!gMth12) throw new Error('Ignore 0 grades');
-        output[2] = gMth12;
-        // i = 3
-        var gNbtAl = Number(getDemographicGrade(doc["NBT AL Score"] || null));
-        if (!gNbtAl) throw new Error('Ignore 0 grades');
-        output[3] = gNbtAl;
-        // i = 4
-        var gNbtQl = Number(getDemographicGrade(doc["NBT QL Score"] || null));
-        if (!gNbtQl) throw new Error('Ignore 0 grades');
-        output[4] = gNbtQl;
-        // i = 5
-        var gNbtMth = Number(getDemographicGrade(doc["NBT Math Score"] || null));
-        if (!gNbtMth) throw new Error('Ignore 0 grades');
-        output[5] = gNbtMth;
-        // i = 6
-        var g12Avg = Number([gEng12, gSci12, gMth12].avg(true));
-        output[6] = g12Avg;
-        // i = 7
-        var g12AvgMth = Number([gEng12, gSci12, gMth12, gMth12].avg(true));
-        output[7] = g12AvgMth;
-        // i = 8
-        var g12AvgMthSci = Number([gEng12, gSci12, gMth12, gMth12, gSci12].avg(true));
-        output[8] = g12AvgMthSci;
-        // i = 9
-        var gNbtAvg = Number([gNbtAl, gNbtQl, gNbtMth].avg(true));
-        output[9] = gNbtAvg;
-        // i = 10
-        var gNbtAvgAl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl].avg(true));
-        output[10] = gNbtAvgAl;
-        // i = 11
-        var gNbtAvgQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl].avg(true));
-        output[11] = gNbtAvgQl;
-        // i = 12
-        var gNbtAvgMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtMth].avg(true));
-        output[12] = gNbtAvgMth;
-        // i = 13
-        var gNbtAvgAlQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtQl].avg(true));
-        output[13] = gNbtAvgAlQl;
-        // i = 14
-        var gNbtAvgAlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtAvgMth].avg(true));
-        output[14] = gNbtAvgAlMth;
-        // i = 15
-        var gNbtAvgQlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl, gNbtMth].avg(true));
-        output[15] = gNbtAvgQlMth;
-        // i = 16
-        var gGr12NbtAvg = Number([g12Avg, gNbtAvg].avg(true));
-        output[16] = gGr12NbtAvg;
-        // i = 17
-        var gGr12NbtAvgGr12Mth = Number([g12Avg, gNbtAvg, gMth12].avg(true));
-        output[17] = gGr12NbtAvgGr12Mth;
-        // i = 18
-        var gGr12NbtAvgGr12MthSci = Number([g12Avg, gNbtAvg, gMth12, gSci12].avg(true));
-        output[18] = gGr12NbtAvgGr12MthSci;
-
-    } catch (error) {
-
-        /* Swallow known errors without emitting (by re-throwing) */
-        switch (error.message) {
-            case 'Ignore 0 grades':
-                throw error;
-                break;
-            case 'Divisor cannot be 0':
-                throw error;
-                break;
-            default:
-                output = error.message;
-                break;
-        };
-    };
+    // i = 0
+    var gEng12 = Number(getDemographicGrade(doc["Eng Grd12 Fin Rslt"] || null));
+    if (!gEng12) return;
+    output[0] = gEng12;
+    // i = 1
+    var gSci12 = Number(getDemographicGrade(doc["Phy Sci Grd12 Fin Rslt"] || null));
+    if (!gSci12) return;
+    output[1] = gSci12;
+    // i = 2
+    var gMth12 = Number(getDemographicGrade(doc["Math Grd12 Fin Rslt"] || null));
+    if (!gMth12) return;
+    output[2] = gMth12;
+    // i = 3
+    var gNbtAl = Number(getDemographicGrade(doc["NBT AL Score"] || null));
+    if (!gNbtAl) return;
+    output[3] = gNbtAl;
+    // i = 4
+    var gNbtQl = Number(getDemographicGrade(doc["NBT QL Score"] || null));
+    if (!gNbtQl) return;
+    output[4] = gNbtQl;
+    // i = 5
+    var gNbtMth = Number(getDemographicGrade(doc["NBT Math Score"] || null));
+    if (!gNbtMth) return;
+    output[5] = gNbtMth;
+    // i = 6
+    var g12Avg = Number([gEng12, gSci12, gMth12].avg(true));
+    output[6] = g12Avg;
+    // i = 7
+    var g12AvgMth = Number([gEng12, gSci12, gMth12, gMth12].avg(true));
+    output[7] = g12AvgMth;
+    // i = 8
+    var g12AvgMthSci = Number([gEng12, gSci12, gMth12, gMth12, gSci12].avg(true));
+    output[8] = g12AvgMthSci;
+    // i = 9
+    var gNbtAvg = Number([gNbtAl, gNbtQl, gNbtMth].avg(true));
+    output[9] = gNbtAvg;
+    // i = 10
+    var gNbtAvgAl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl].avg(true));
+    output[10] = gNbtAvgAl;
+    // i = 11
+    var gNbtAvgQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl].avg(true));
+    output[11] = gNbtAvgQl;
+    // i = 12
+    var gNbtAvgMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtMth].avg(true));
+    output[12] = gNbtAvgMth;
+    // i = 13
+    var gNbtAvgAlQl = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtQl].avg(true));
+    output[13] = gNbtAvgAlQl;
+    // i = 14
+    var gNbtAvgAlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtAl, gNbtAvgMth].avg(true));
+    output[14] = gNbtAvgAlMth;
+    // i = 15
+    var gNbtAvgQlMth = Number([gNbtAl, gNbtQl, gNbtMth, gNbtQl, gNbtMth].avg(true));
+    output[15] = gNbtAvgQlMth;
+    // i = 16
+    var gGr12NbtAvg = Number([g12Avg, gNbtAvg].avg(true));
+    output[16] = gGr12NbtAvg;
+    // i = 17
+    var gGr12NbtAvgGr12Mth = Number([g12Avg, gNbtAvg, gMth12].avg(true));
+    output[17] = gGr12NbtAvgGr12Mth;
+    // i = 18
+    var gGr12NbtAvgGr12MthSci = Number([g12Avg, gNbtAvg, gMth12, gSci12].avg(true));
+    output[18] = gGr12NbtAvgGr12MthSci;
 
     /* Output */
     emit(id, output);

@@ -1,8 +1,9 @@
 function(head, req) {
-    provides('csv', function() {
+    provides('html', function() {
         var row;
         while (row = getRow()) {
-            send(row + ",");
+            var val = row.value.anonIDnew;
+            send(val + "<br>");
         };
     });
 };

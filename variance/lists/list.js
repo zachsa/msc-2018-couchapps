@@ -40,12 +40,15 @@ function(head, req) {
             <title>Variance &amp; Std Deviation Analysis</title>\
         </head>\
         <body>\
-            <table style="width:40%;margin:auto;">\
+            <table style="width:100%;margin:auto;">\
                 <thead>\
                     <tr>\
                         <th style="width:50%;">Benchmark Measurement</th>\
-                        <th style="width:25%;">Variance</th>\
-                        <th style="width:25%;">Std Deviation</th>\
+                        <th style="width:10%;">Variance</th>\
+                        <th style="width:10%;">Std Deviation</th>\
+                        <th style="width:10%;">sum</th>\
+                        <th style="width:10%;">count</th>\
+                        <th style="width:10%;">sumsqr</th>\
                     </tr>\
                 </thead>\
                 <tbody>';
@@ -53,24 +56,30 @@ function(head, req) {
         /* Add variance and Std Deviation to HTML */
         data.forEach(function(item, i, arr) {
             var header = headers[i];
-            var sampleVariance = 0;
-            var stdDev = 0;
-            if (i >= 0) {
-                var sum = item.sum;
-                var count = item.count;
-                var sumSqr = new Decimal(item.sumsqr);
-                var mean = ((new Decimal(sum)).div((new Decimal(count))));
-                var meanSqr = mean.pow(2);
-                var sTemp = sumSqr.div(new Decimal(count - 1));
-                sampleVariance = sTemp.minus(meanSqr);
-                stdDev = sampleVariance.sqrt();
-            };
+            var sum = new Decimal(item.sum);
+            var count = new Decimal(item.count);
+            var sumsqr = new Decimal(item.sumsqr);
+            var sqrsum = new Decimal(sum.pow(2));
+            var top = new Decimal(sqrsum.minus(new Decimal(sqrsum.div(count))));
+            var sampleVariance = top.div(count - 1);
+            var stdDev = new Decimal(sampleVariance).sqrt();
+
+            // var sum = item.sum;
+            // var count = item.count;
+            // var sumsqr = item.sumsqr;
+            // var sqrsum = Math.pow(sum, 2)
+            // var top = sumsqr - (sqrsum / count);
+            // var sampleVariance = top / (count - 1);
+            // var stdDev = Math.sqrt(sampleVariance);
 
             var row = '\
             <tr>\
                 <td>' + header + '</td>\
-                <td style="text-align:center;">' + ((sampleVariance === 0) ? '-' : sampleVariance.toFixed(1)) + '</td>\
-                <td style="text-align:center;">' + ((stdDev === 0) ? '-' : stdDev.toFixed(1)) + '</td>\
+                <td style="text-align:center;">' + sampleVariance.toFixed(1) + '</td>\
+                <td style="text-align:center;">' + stdDev.toFixed(1) + '</td>\
+                <td style="text-align:center;">' + sum.toFixed(0) + '</td>\
+                <td style="text-align:center;">' + count.toFixed(0) + '</td>\
+                <td style="text-align:center;">' + sumsqr.toFixed(0) + '</td>\
             </tr>';
             html += row;
         });
